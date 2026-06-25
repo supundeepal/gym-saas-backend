@@ -13,9 +13,11 @@ return new class extends Migration
     {
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('gym_id')->constrained('gyms')->onDelete('cascade'); // කුමන ජිම් එකේද?
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // කුමන සාමාජිකයාද?
-            $table->timestamp('check_in_time'); // ආපු වෙලාව
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // පැමිණි සාමාජිකයා
+            $table->foreignId('gym_id')->constrained('gyms')->onDelete('cascade'); // අදාළ ජිම් එක
+            $table->date('date'); // පැමිණි දිනය
+            $table->time('check_in_time'); // ඇතුළු වූ වෙලාව
+            $table->time('check_out_time')->nullable(); // පිටවූ වෙලාව (මුලින්ම මේක හිස්ව තියෙන්නේ)
             $table->timestamps();
         });
     }

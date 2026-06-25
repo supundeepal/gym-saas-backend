@@ -9,6 +9,11 @@ class Attendance extends Model
 {
     use HasFactory;
 
-    // Database එකට දත්ත ඇතුළත් කිරීමට අවසර ලබා දීම
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'gym_id',
+        'date',
+        'check_in_time',
+        'check_out_time',
+    ];
 }
