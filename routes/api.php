@@ -9,6 +9,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\WorkoutPlanController;
+use App\Http\Controllers\AnnouncementController;
 
 // ලොග් වෙන්න තියෙන Route එක 
 Route::post('/login', [AuthController::class, 'login']);
@@ -41,5 +42,8 @@ Route::post('/payments', [PaymentController::class, 'store']);
 Route::get('/dashboard', [DashboardController::class, 'index']);
 Route::post('/workout-plans', [WorkoutPlanController::class, 'store']);
 Route::get('/my-workout-plan', [WorkoutPlanController::class, 'show']);
+// දැන්වීම් (Announcements) සඳහා Routes
+Route::post('/announcements', [AnnouncementController::class, 'store']); // දැන්වීම් දැමීමට
+Route::get('/announcements', [AnnouncementController::class, 'index']);  // දැන්වීම් බැලීමට
 
 }); // ආරක්ෂිත කලාපය අවසානය
