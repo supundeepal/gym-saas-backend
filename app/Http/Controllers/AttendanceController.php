@@ -56,7 +56,7 @@ class AttendanceController extends Controller
 
         // අද දිනය සහ මේ වෙලාව ලබාගැනීම
         $today = Carbon::today()->toDateString();
-        $now = Carbon::now()->toTimeString();
+       $now = Carbon::now()->toDateTimeString();
 
         // අද දවසට අදාළව මේ සාමාජිකයාගේ පැමිණීමක් දැනටමත් තියෙනවද බැලීම
         $attendance = Attendance::where('user_id', $member->id)
