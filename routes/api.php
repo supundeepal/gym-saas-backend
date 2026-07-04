@@ -50,4 +50,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // පැමිණීම් (Attendance) සඳහා
     Route::post('/attendance/mark', [AttendanceController::class, 'markAttendance']);
 
+    Route::post('/members/assign-rfid', [MemberController::class, 'assignRfid']);
+
 }); // ආරක්ෂිත කලාපය අවසානය

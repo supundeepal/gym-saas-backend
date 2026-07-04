@@ -51,5 +51,38 @@ class MemberController extends Controller
             'status' => 'success',
             'data' => $members
         ], 200);
+    }// සාමාජිකයෙකුට RFID කාඩ්පතක් සම්බන්ධ කිරීම
+    public function assignRfid(Request $request)
+    {
+        $admin = Auth::user();
+
+        // 1. එවන දත්ත පරීක්ෂා කිරීම (member_id අනිවාර්යයි, rfid_number එක වෙනස් කෙනෙකුට දීලා නැතිවෙන්න ඕන)
+        $request->validate([
+            'member_id' => 'required|exists:users,id',
+            'rfid_number' => 'required|string|unique:users,rfid_number'
+        ]);
+
+        // 2. අදාළ සාමාජිකයාව සොයාගැනීම (ඇඩ්මින්ගේ ජිම් එකේ පමණක්)
+        $member = User::where('id', $request->member_id)
+                      ->where('gym_id', $admin->gym_id)
+                      ->where('role', 'member')
+                      ->first();
+
+        if (!$member) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Member not found in your gym'
+            ], 404);
+        }
+
+        // 3. RFID අංකය යාවත්කාලීන කිරීම
+        $member->rfid_number = $request->rfid_number;
+        $member->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'RFID assigned successfully',
+            'data' => $member
+        ], 200);
     }
 }
