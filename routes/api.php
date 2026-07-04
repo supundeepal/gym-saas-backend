@@ -52,4 +52,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/members/assign-rfid', [MemberController::class, 'assignRfid']);
 
+    Route::post('/register-gym', [AuthController::class, 'registerGym']);
+
 }); // ආරක්ෂිත කලාපය අවසානය
