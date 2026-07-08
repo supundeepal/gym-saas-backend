@@ -54,4 +54,28 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/register-gym', [AuthController::class, 'registerGym']);
 
+    // Dashboard දත්ත ගන්න රූට් එක (මේකටත් ටෝකන් එක ඕන නිසා auth:sanctum එක ඇතුළේ දාන්න)
+Route::middleware('auth:sanctum')->get('/dashboard-stats', [App\Http\Controllers\AuthController::class, 'getDashboardStats']);
+
+// සියලුම ජිම් විස්තර ගන්න රූට් එක
+    Route::get('/all-gyms', [AuthController::class, 'getAllGyms']);
+
+// Edit සහ Delete රූට්ස්
+    Route::put('/gyms/{id}', [AuthController::class, 'updateGym']);
+    Route::delete('/gyms/{id}', [AuthController::class, 'deleteGym']);
+
+// Gym Owners ලව ගන්න රූට් එක
+    Route::get('/gym-owners', [AuthController::class, 'getAllGymOwners']);
+
+    Route::get('/plans', [AuthController::class, 'getAllPlans']);
+
+    Route::post('/plans', [AuthController::class, 'storePlan']);
+    Route::delete('/plans/{id}', [AuthController::class, 'deletePlan']);
+
+    Route::get('/sms-packages', [AuthController::class, 'getSmsPackages']);
+    Route::post('/sms-packages', [AuthController::class, 'storeSmsPackage']);
+    Route::delete('/sms-packages/{id}', [AuthController::class, 'deleteSmsPackage']);
+
+    Route::get('/owner/dashboard-stats', [AuthController::class, 'getOwnerDashboardStats']);
+    
 }); // ආරක්ෂිත කලාපය අවසානය
