@@ -46,29 +46,35 @@
     </div>
 
     <script>
-        document.getElementById('portalLoginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+    document.getElementById('portalLoginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
 
-            fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ email, password })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-                    // Owner හෝ Staff ද කියලා බලනවා
-                    if (data.role === 'gym_owner' || data.role === 'gym_staff') {
-                        localStorage.setItem('gym_owner_token', data.token);
-                        window.location.href = '/owner-dashboard'; 
-                    } else {
-                        alert('Access Denied: This portal is for Gym Owners and Staff only!');
-                    }
-                } else { alert('Login Failed: ' + data.message); }
-            });
+        fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ email, password })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                // Owner හෝ Staff ද කියලා බලනවා
+                if (data.user.role === 'gym_owner' || data.user.role === 'admin' || data.user.role === 'owner' || data.user.role === 'gym_staff') {
+                    localStorage.setItem('gym_owner_token', data.token);
+                    
+                    // 👈 මෙන්න මෙතන ලින්ක් එක /owner/dashboard විදිහට වෙනස් කළා (web.php එකේ තියෙන විදිහටම වෙන්න ඕන)
+                    window.location.href = '/owner/dashboard'; 
+                } else {
+                    alert('Access Denied: This portal is for Gym Owners and Staff only!');
+                }
+            } else { alert('Login Failed: ' + data.message); }
+        })
+        .catch(err => {
+            console.error("Login Error: ", err);
+            alert("An error occurred during login. Please try again.");
         });
-    </script>
+    });
+</script>
 </body>
 </html>

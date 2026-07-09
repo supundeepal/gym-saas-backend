@@ -63,12 +63,12 @@ class AuthController extends Controller
             'slug' => Str::slug($request->gym_name), 
         ]);
 
-        // ජිම් එකේ අයිතිකරුව (Admin) Database එකට දැමීම
+       // ජිම් එකේ අයිතිකරුව Database එකට දැමීම
         $owner = User::create([
             'name' => $request->owner_name,
             'email' => $request->owner_email,
             'password' => Hash::make($request->owner_password),
-            'role' => 'admin',
+            'role' => 'gym_owner', // 👈 මෙතන 'admin' වෙනුවට 'gym_owner' කළා
             'gym_id' => $gym->id, 
         ]);
 
@@ -92,7 +92,8 @@ class AuthController extends Controller
 
         // Database එකෙන් දත්ත ගැනීම
         $totalGyms = Gym::count();
-        $totalOwners = User::where('role', 'admin')->count();
+        $ownerRoles = ['gym_owner', 'admin', 'owner'];
+        $totalOwners = User::whereIn('role', $ownerRoles)->count();
         
         // අලුතින්ම රෙජිස්ටර් කරපු ජිම් 5 ක ලිස්ට් එකක් (අයිතිකාරයත් එක්ක)
         $recentGyms = Gym::orderBy('created_at', 'desc')->take(5)->get();
@@ -118,8 +119,11 @@ class AuthController extends Controller
         }
 
         $gyms = \Illuminate\Support\Facades\DB::table('gyms')
-            ->leftJoin('users', 'gyms.id', '=', 'users.gym_id')
-            // 👇 මෙන්න මෙතනට gyms.sms_balance එක එකතු කළා 👇
+            ->leftJoin('users', function ($join) {
+                $join->on('gyms.id', '=', 'users.gym_id')
+                     ->whereIn('users.role', ['gym_owner', 'admin', 'owner']);
+            })
+            // 👇 gyms.sms_balance එක හා owner හඳුනාගැනීම සඳහා owner-roles පමණක් එකතු කරලා තියෙන්නේ 👇
             ->select('gyms.id', 'gyms.name as gym_name', 'gyms.created_at', 'gyms.sms_balance', 'users.name as owner_name', 'users.email as owner_email')
             ->orderBy('gyms.created_at', 'desc')
             ->get();
@@ -151,7 +155,7 @@ class AuthController extends Controller
         $gym->save();
 
         // අයිතිකාරයාගේ නමත් අප්ඩේට් කරනවා
-        $owner = User::where('gym_id', $id)->where('role', 'admin')->first();
+        $owner = User::where('gym_id', $id)->whereIn('role', ['gym_owner', 'admin', 'owner'])->first();
         if ($owner) {
             $owner->name = $request->owner_name;
             $owner->save();
@@ -186,9 +190,9 @@ class AuthController extends Controller
             return response()->json(['message' => 'Unauthorized Access.'], 403);
         }
 
-        // 'admin' (Gym Owner) රෝල් එක තියෙන යූසර්ලා විතරක් ගන්නවා, ඒකට අදාළ ජිම් එකේ නමත් එක්ක
+        // Only return users that have an owner role, joined with their gym
         $owners = \Illuminate\Support\Facades\DB::table('users')
-            ->where('users.role', 'admin')
+            ->whereIn('users.role', ['gym_owner', 'admin', 'owner'])
             ->leftJoin('gyms', 'users.gym_id', '=', 'gyms.id')
             ->select('users.id', 'users.name as owner_name', 'users.email', 'users.created_at', 'gyms.name as gym_name')
             ->orderBy('users.created_at', 'desc')
@@ -255,5 +259,69 @@ class AuthController extends Controller
     {
         \App\Models\SmsPackage::where('id', $id)->delete();
         return response()->json(['status' => 'success']);
+    }
+
+    // 12. Super Admin ට Gym Owner කෙනෙක් විදිහට ලොග් වීමට (Impersonate)
+    public function impersonateOwner($id)
+    {
+        $superAdmin = Auth::user();
+        
+        if ($superAdmin->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized Access.'], 403);
+        }
+
+        // Prefer direct user lookup by id; if not found, treat the input as a gym_id and find an owner
+        $ownerRoles = ['gym_owner', 'admin', 'owner'];
+
+        $targetOwner = \App\Models\User::find($id);
+
+        if (!$targetOwner) {
+            // find a user who is an owner for that gym
+            $targetOwner = \App\Models\User::where('gym_id', $id)->whereIn('role', $ownerRoles)->first();
+        }
+
+        if (!$targetOwner) {
+            return response()->json(['message' => 'User account not found.'], 404);
+        }
+
+        // Ensure the found user has an owner role
+        if (!in_array($targetOwner->role, $ownerRoles, true)) {
+            return response()->json(['message' => 'This user is not a Gym Owner. (Current Role: ' . $targetOwner->role . ')'], 404);
+        }
+
+        $token = $targetOwner->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'status' => 'success',
+            'token' => $token
+        ], 200);
+    }
+
+    public function getOwnerDashboardStats()
+    {
+        $user = Auth::user();
+
+        // ලොග් වෙලා ඉන්නේ Gym Owner කෙනෙක්ද කියලා බලනවා
+        if ($user->role !== 'gym_owner' && $user->role !== 'admin' && $user->role !== 'owner') {
+            return response()->json(['message' => 'Unauthorized Access.'], 403);
+        }
+
+        $gym = \App\Models\Gym::find($user->gym_id);
+        $memberCount = \App\Models\User::where('gym_id', $user->gym_id)->where('role', 'member')->count();
+
+        return response()->json([
+            'status' => 'success',
+            'stats' => [
+                // 🔹 මේ ටික තමයි ඔයාගේ පරණ කේතයේ තිබුණේ
+                'gym_name' => optional($gym)->name,
+                'members' => $memberCount,
+                'gym_id' => $user->gym_id,
+                
+                // 🔹 මේ ටික මම අලුතින් ඔයාට ඕන නිසා එකතු කළා (Frontend එකේ undefined එන්නේ නැති වෙන්න)
+                'owner_name' => $user->name,
+                'sms_balance' => optional($gym)->sms_balance ?? 0,
+                'monthly_revenue' => 0, // දැනට 0, පස්සේ Payment table එකෙන් ගනිමු
+            ]
+        ], 200);
     }
 }

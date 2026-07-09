@@ -54,10 +54,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/register-gym', [AuthController::class, 'registerGym']);
 
-    // Dashboard දත්ත ගන්න රූට් එක (මේකටත් ටෝකන් එක ඕන නිසා auth:sanctum එක ඇතුළේ දාන්න)
-Route::middleware('auth:sanctum')->get('/dashboard-stats', [App\Http\Controllers\AuthController::class, 'getDashboardStats']);
+    // Dashboard දත්ත ගන්න රූට් එක
+    Route::get('/dashboard-stats', [AuthController::class, 'getDashboardStats']);
 
-// සියලුම ජිම් විස්තර ගන්න රූට් එක
+    // සියලුම ජිම් විස්තර ගන්න රූට් එක
     Route::get('/all-gyms', [AuthController::class, 'getAllGyms']);
 
 // Edit සහ Delete රූට්ස්
@@ -77,5 +77,8 @@ Route::middleware('auth:sanctum')->get('/dashboard-stats', [App\Http\Controllers
     Route::delete('/sms-packages/{id}', [AuthController::class, 'deleteSmsPackage']);
 
     Route::get('/owner/dashboard-stats', [AuthController::class, 'getOwnerDashboardStats']);
-    
+
+    Route::post('/admin/impersonate/{id}', [AuthController::class, 'impersonateOwner']);
+
 }); // ආරක්ෂිත කලාපය අවසානය
+    

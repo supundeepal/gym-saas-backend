@@ -55,7 +55,7 @@
             .then(data => {
                 if(data.status === 'success') {
                     // Super Admin ද කියලා තහවුරු කරනවා
-                    if (data.role === 'super_admin') {
+                    if (data.user.role === 'super_admin') {
                         localStorage.setItem('gym_super_admin_token', data.token);
                         window.location.href = '/'; 
                     } else {

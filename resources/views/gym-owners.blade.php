@@ -18,7 +18,7 @@
                 <i class="fa-solid fa-server text-brandOrange text-2xl"></i>
                 <span class="text-xl font-bold tracking-wider">Gym SaaS</span>
             </div>
-           <nav class="mt-4 px-4 space-y-2">
+            <nav class="mt-4 px-4 space-y-2">
                 <a href="/" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
                     <i class="fa-solid fa-chart-line w-5"></i>
                     <span class="font-semibold">System Overview</span>
@@ -27,11 +27,10 @@
                     <i class="fa-solid fa-dumbbell w-5"></i>
                     <span>Manage Gyms</span>
                 </a>
-                <a href="/gym-owners" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+                <a href="/gym-owners" class="flex items-center gap-4 px-4 py-3 bg-brandOrange text-white rounded-lg shadow-lg transition">
                     <i class="fa-solid fa-user-shield w-5"></i>
                     <span>Gym Owners</span>
                 </a>
-                <!-- අලුතින් දාපු Subscriptions ලින්ක් එක -->
                 <a href="/subscriptions" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
                     <i class="fa-solid fa-tags w-5"></i>
                     <span>Subscriptions</span>
@@ -70,18 +69,21 @@
 
             <div class="bg-panelBg rounded-2xl border border-gray-700/50 overflow-hidden shadow-lg">
                 <table class="w-full text-left text-sm">
-                    <thead class="bg-darkBg text-gray-400">
+                    <thead class="bg-darkBg text-gray-400 border-b border-gray-800">
                         <tr>
                             <th class="px-6 py-4 font-medium">Owner ID</th>
                             <th class="px-6 py-4 font-medium">Owner Name</th>
                             <th class="px-6 py-4 font-medium">Email Address</th>
                             <th class="px-6 py-4 font-medium">Associated Gym</th>
                             <th class="px-6 py-4 font-medium">Account Created</th>
+                            <!-- 🔹 අලුතින් එකතු කළ තීරුව (Actions) -->
+                            <th class="px-6 py-4 font-medium text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="owners-table" class="divide-y divide-gray-800 text-gray-300">
                         <tr>
-                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">Loading owners data...</td>
+                            <!-- 🔹 Loading පෙන්නද්දි colspan එක 6 ක් කළා -->
+                            <td colspan="6" class="px-6 py-8 text-center text-gray-500">Loading owners data...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -91,7 +93,7 @@
 
     <script>
         const superAdminToken = localStorage.getItem('gym_super_admin_token');
-        if (!superAdminToken) window.location.href = '/login';
+        if (!superAdminToken) window.location.href = '/admin/login';
 
         let allOwnersData = [];
 
@@ -107,7 +109,8 @@
                     allOwnersData = data.owners;
                     renderTable(allOwnersData);
                 }
-            });
+            })
+            .catch(err => console.error(err));
         }
 
         function renderTable(owners) {
@@ -120,18 +123,25 @@
                             <td class="px-6 py-4 text-gray-500">#${owner.id}</td>
                             <td class="px-6 py-4 font-semibold text-white">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-brandOrange">${owner.owner_name.charAt(0)}</div>
+                                    <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-xs font-bold text-brandOrange">${owner.owner_name ? owner.owner_name.charAt(0) : 'U'}</div>
                                     ${owner.owner_name}
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-blue-400">${owner.email}</td>
                             <td class="px-6 py-4"><span class="bg-gray-700 px-3 py-1 rounded-full text-xs">${owner.gym_name || 'No Gym'}</span></td>
                             <td class="px-6 py-4">${dateJoined}</td>
+                            
+                            <!-- 🔹 Login As බොත්තම දැම්මේ මෙතනටයි -->
+                            <td class="px-6 py-4 text-right">
+                                <button onclick="loginAsOwner(${owner.id})" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition inline-flex items-center gap-2">
+                                    <i class="fa-solid fa-right-to-bracket"></i> Login As
+                                </button>
+                            </td>
                         </tr>
                     `;
                 });
             } else {
-                tableBody = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">No Gym Owners found.</td></tr>`;
+                tableBody = `<tr><td colspan="6" class="px-6 py-8 text-center text-gray-500">No Gym Owners found.</td></tr>`;
             }
             document.getElementById('owners-table').innerHTML = tableBody;
         }
@@ -145,9 +155,32 @@
             renderTable(filteredOwners);
         });
 
+        // 🔹 අලුත් Login As (Impersonate) ෆන්ක්ෂන් එක
+        function loginAsOwner(ownerId) {
+            fetch(`/api/admin/impersonate/${ownerId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + superAdminToken,
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    // අදාළ Owner ගේ Token එක බ්‍රවුසරයට දාලා අලුත් ටැබ් එකකට යවනවා
+                    localStorage.setItem('gym_owner_token', data.token);
+                    window.open('/owner-dashboard', '_blank');
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(err => console.error("Impersonate error: ", err));
+        }
+
         function logout() {
             localStorage.removeItem('gym_super_admin_token');
-            window.location.href = '/login';
+            // 🔹 Logout එකත් අලුත් admin/login එකට යැව්වා
+            window.location.href = '/admin/login';
         }
     </script>
 </body>

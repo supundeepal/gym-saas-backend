@@ -122,8 +122,11 @@
         }
 
         function logout() {
+            // Gym Owner ගේ Token එක මකලා දානවා
             localStorage.removeItem('gym_owner_token');
-            window.location.href = '/login';
+            
+            // 👈 මෙන්න මේකයි වෙනස් වෙන්න ඕන (පරණ /login වෙනුවට /portal/login දාන්න)
+            window.location.href = '/portal/login'; 
         }
     </script>
 </body>
