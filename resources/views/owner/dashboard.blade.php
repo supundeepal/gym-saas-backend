@@ -23,7 +23,7 @@
                     <i class="fa-solid fa-chart-pie w-5"></i>
                     <span class="font-semibold">Dashboard</span>
                 </a>
-                <a href="#" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition"><i class="fa-solid fa-users w-5"></i><span>Members</span></a>
+                <a href="/owner/members" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition"><i class="fa-solid fa-users w-5"></i><span>Members</span></a>
                 <a href="#" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition"><i class="fa-solid fa-id-card w-5"></i><span>Memberships</span></a>
                 <a href="#" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition"><i class="fa-solid fa-calendar-check w-5"></i><span>Attendance</span></a>
                 <a href="#" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition"><i class="fa-solid fa-message w-5"></i><span>SMS & Alerts</span></a>
@@ -88,46 +88,38 @@
     </main>
 
     <script>
-        // 🔹 Gym Owner ගේ Token එක ගන්නවා (ලොගින් පිටුවෙන් මේ නමට සේව් කරන්න ඕන)
+        // Get gym owner token saved in localStorage
         const ownerToken = localStorage.getItem('gym_owner_token');
-        if (!ownerToken) window.location.href = '/login';
+        if (!ownerToken) {
+            window.location.href = '/portal/login';
+        }
 
-        document.addEventListener('DOMContentLoaded', loadDashboardStats);
+        function logout() {
+            localStorage.removeItem('gym_owner_token');
+            window.location.href = '/portal/login';
+        }
 
-        function loadDashboardStats() {
-            fetch('/api/owner/dashboard-stats', {
-                headers: { 
-                    'Accept': 'application/json', 
-                    'Authorization': 'Bearer ' + ownerToken 
-                }
+        // Load dashboard stats from API
+        (function loadStats(){
+            fetch('/api/owner/dashboard', {
+                headers: { 'Authorization': 'Bearer ' + ownerToken }
             })
             .then(res => res.json())
             .then(data => {
-                if(data.status === 'success') {
-                    // API එකෙන් ආපු ඇත්තම ඩේටා ටික පිටුවට දානවා
-                    document.getElementById('sidebar-gym-name').innerText = data.gym_name;
-                    document.getElementById('owner-name').innerText = data.owner_name;
-                    document.getElementById('stat-sms-balance').innerText = 'Rs. ' + parseFloat(data.sms_balance).toFixed(2);
-                    document.getElementById('stat-total-members').innerText = data.total_members;
-                    document.getElementById('stat-active-members').innerText = data.active_members;
-                    document.getElementById('stat-revenue').innerText = 'Rs. ' + data.monthly_revenue.toLocaleString();
+                if(data && data.status === 'success') {
+                    document.getElementById('sidebar-gym-name').innerText = data.gym_name || '';
+                    document.getElementById('owner-name').innerText = data.owner_name || '';
+                    document.getElementById('stat-sms-balance').innerText = 'Rs. ' + (parseFloat(data.sms_balance) || 0).toFixed(2);
+                    document.getElementById('stat-total-members').innerText = data.total_members || 0;
+                    document.getElementById('stat-active-members').innerText = data.active_members || 0;
+                    document.getElementById('stat-revenue').innerText = 'Rs. ' + ((data.monthly_revenue && Number(data.monthly_revenue)) ? Number(data.monthly_revenue).toLocaleString() : '0');
                 } else {
                     alert('Session expired. Please login again.');
                     logout();
                 }
             })
-            .catch(err => {
-                console.error("Error loading stats:", err);
-            });
-        }
-
-        function logout() {
-            // Gym Owner ගේ Token එක මකලා දානවා
-            localStorage.removeItem('gym_owner_token');
-            
-            // 👈 මෙන්න මේකයි වෙනස් වෙන්න ඕන (පරණ /login වෙනුවට /portal/login දාන්න)
-            window.location.href = '/portal/login'; 
-        }
+            .catch(err => console.error('Error loading stats:', err));
+        })();
     </script>
 </body>
 </html>

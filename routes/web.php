@@ -33,3 +33,13 @@ Route::get('/subscriptions', function () {
 Route::get('/owner-dashboard', function () {
     return view('owner.dashboard'); 
 });
+
+// Gym Owner ට අදාළ පිටු
+Route::get('/owner-dashboard', function () {
+    return view('owner.dashboard');
+});
+
+// 👈 මේ අලුත් පේළිය එකතු කරන්න
+Route::get('/owner/members', function () {
+    return view('owner.members'); 
+});

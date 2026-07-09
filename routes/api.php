@@ -80,5 +80,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/admin/impersonate/{id}', [AuthController::class, 'impersonateOwner']);
 
+    // Gym Members ලාව Add කිරීම සඳහා
+    Route::post('/owner/members', [\App\Http\Controllers\MemberController::class, 'store']);
+
+    // Members ලා සම්බන්ධ රූට්ස් (auth:sanctum ඇතුළේ දාන්න)
+    Route::get('/owner/members', [\App\Http\Controllers\MemberController::class, 'index']);
+    Route::post('/owner/members', [\App\Http\Controllers\MemberController::class, 'store']);
+    Route::post('/owner/members/rfid', [\App\Http\Controllers\MemberController::class, 'assignRfid']);
+
 }); // ආරක්ෂිත කලාපය අවසානය
     

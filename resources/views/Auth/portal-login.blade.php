@@ -59,16 +59,15 @@
         .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
-                // Owner හෝ Staff ද කියලා බලනවා
                 if (data.user.role === 'gym_owner' || data.user.role === 'admin' || data.user.role === 'owner' || data.user.role === 'gym_staff') {
                     localStorage.setItem('gym_owner_token', data.token);
                     
-                    // 👈 මෙන්න මෙතන ලින්ක් එක /owner/dashboard විදිහට වෙනස් කළා (web.php එකේ තියෙන විදිහටම වෙන්න ඕන)
-                    window.location.href = '/owner/dashboard'; 
+                    // 👈 මෙන්න මේ ලින්ක් එක හරියටම මේ විදිහටම තියෙන්න ඕන
+                    window.location.href = '/owner-dashboard'; 
                 } else {
                     alert('Access Denied: This portal is for Gym Owners and Staff only!');
                 }
-            } else { alert('Login Failed: ' + data.message); }
+            }
         })
         .catch(err => {
             console.error("Login Error: ", err);
