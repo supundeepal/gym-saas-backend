@@ -88,5 +88,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/owner/members', [\App\Http\Controllers\MemberController::class, 'store']);
     Route::post('/owner/members/rfid', [\App\Http\Controllers\MemberController::class, 'assignRfid']);
 
+    Route::get('/packages', [App\Http\Controllers\PackageController::class, 'index']);
+Route::post('/packages', [App\Http\Controllers\PackageController::class, 'store']);
+
+Route::put('/packages/{id}', [App\Http\Controllers\PackageController::class, 'update']);
+Route::delete('/packages/{id}', [App\Http\Controllers\PackageController::class, 'destroy']);
+
+// Attendance සඳහා API Routes
+Route::get('/attendance/today', [App\Http\Controllers\AttendanceController::class, 'today']);
+Route::post('/attendance/mark', [App\Http\Controllers\AttendanceController::class, 'mark']);
+Route::delete('/attendance/{id}', [App\Http\Controllers\AttendanceController::class, 'destroy']);
+
 }); // ආරක්ෂිත කලාපය අවසානය
     

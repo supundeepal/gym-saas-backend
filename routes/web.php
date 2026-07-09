@@ -43,3 +43,7 @@ Route::get('/owner-dashboard', function () {
 Route::get('/owner/members', function () {
     return view('owner.members'); 
 });
+
+Route::get('/owner/memberships', [App\Http\Controllers\PackageController::class, 'viewMemberships']);
+
+Route::get('/owner/attendance', [App\Http\Controllers\AttendanceController::class, 'viewAttendance']);

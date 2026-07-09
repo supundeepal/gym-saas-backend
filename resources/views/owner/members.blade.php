@@ -18,17 +18,17 @@
                 <i class="fa-solid fa-dumbbell text-brandBlue text-2xl"></i>
                 <span class="text-xl font-bold tracking-wider">Gym Portal</span>
             </div>
-            <nav class="mt-4 px-4 space-y-2">
+           <nav class="mt-4 px-4 space-y-2">
                 <a href="/owner-dashboard" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
                     <i class="fa-solid fa-chart-pie w-5"></i> <span>Dashboard</span>
                 </a>
-                <a href="/owner/members" class="flex items-center gap-4 px-4 py-3 bg-brandBlue text-white rounded-lg shadow-lg transition">
+                <a href="/owner/members" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
                     <i class="fa-solid fa-users w-5"></i> <span>Members</span>
                 </a>
-                <a href="#" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+                <a href="/owner/memberships" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
                     <i class="fa-solid fa-id-card w-5"></i> <span>Memberships</span>
                 </a>
-                <a href="#" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+                <a href="/owner/attendance" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
                     <i class="fa-solid fa-calendar-check w-5"></i> <span>Attendance</span>
                 </a>
                 <a href="#" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">

@@ -19,14 +19,21 @@
                 <span class="text-xl font-bold tracking-wider" id="sidebar-gym-name">Loading...</span>
             </div>
             <nav class="mt-4 px-4 space-y-2">
-                <a href="/owner-dashboard" class="flex items-center gap-4 px-4 py-3 bg-brandPrimary text-white rounded-lg shadow-lg">
-                    <i class="fa-solid fa-chart-pie w-5"></i>
-                    <span class="font-semibold">Dashboard</span>
+                <a href="/owner-dashboard" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+                    <i class="fa-solid fa-chart-pie w-5"></i> <span>Dashboard</span>
                 </a>
-                <a href="/owner/members" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition"><i class="fa-solid fa-users w-5"></i><span>Members</span></a>
-                <a href="#" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition"><i class="fa-solid fa-id-card w-5"></i><span>Memberships</span></a>
-                <a href="#" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition"><i class="fa-solid fa-calendar-check w-5"></i><span>Attendance</span></a>
-                <a href="#" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition"><i class="fa-solid fa-message w-5"></i><span>SMS & Alerts</span></a>
+                <a href="/owner/members" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+                    <i class="fa-solid fa-users w-5"></i> <span>Members</span>
+                </a>
+                <a href="/owner/memberships" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+                    <i class="fa-solid fa-id-card w-5"></i> <span>Memberships</span>
+                </a>
+                <a href="/owner/attendance" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+                    <i class="fa-solid fa-calendar-check w-5"></i> <span>Attendance</span>
+                </a>
+                <a href="#" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+                    <i class="fa-solid fa-comment-sms w-5"></i> <span>SMS Alerts</span>
+                </a>
             </nav>
         </div>
         <div class="px-4 pb-6">

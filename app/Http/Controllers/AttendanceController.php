@@ -10,41 +10,49 @@ use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
-    // පැමිණීම සටහන් කිරීම (Check-in සහ Check-out)
-    public function markAttendance(Request $request)
+    // 1. Attendance වෙබ් පිටුව පෙන්වන function එක
+    public function viewAttendance()
+    {
+        return view('owner.attendance');
+    }
+
+    // 2. අද දවසේ පැමිණි අයගේ ලැයිස්තුව යවන function එක
+    public function today()
+    {
+        $user = Auth::user();
+        $today = Carbon::today()->toDateString();
+        
+        $attendances = Attendance::where('attendances.gym_id', $user->gym_id)
+            ->where('attendances.date', $today)
+            ->join('users', 'attendances.user_id', '=', 'users.id')
+            ->select('attendances.*', 'users.name as member_name', 'users.rfid_number')
+            ->orderBy('attendances.check_in_time', 'desc')
+            ->get();
+
+        $attendances->transform(function($item) {
+            $item->method = $item->rfid_number ? 'RFID' : 'Manual';
+            return $item;
+        });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $attendances
+        ]);
+    }
+
+    // 3. පැමිණීම සටහන් කිරීම (Check-in සහ Check-out - ඔයාගේ පරණ ලොජික් එක)
+    public function mark(Request $request)
     {
         $admin = Auth::user();
+        $identifier = $request->identifier; // Frontend එකෙන් එවන දත්තය (RFID, Email, හෝ Phone)
 
-        
-        // ---------------------------------------------
-
-        // Admin කෙනෙක්ද කියා පරීක්ෂා කිරීම
-        if ($admin->role !== 'admin') {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Only admins can mark attendance'
-            ], 403);
-        }
-
-        // RFID අංකය හෝ User ID එක අනිවාර්යයෙන්ම තිබිය යුතුයි
-        $request->validate([
-            'rfid_number' => 'nullable|string',
-            'user_id' => 'nullable|integer'
-        ]);
-
-        if (!$request->rfid_number && !$request->user_id) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Please provide either RFID number or User ID'
-            ], 400);
-        }
-
-        // සාමාජිකයාව සොයාගැනීම (RFID හෝ ID එක හරහා)
-        if ($request->rfid_number) {
-            $member = User::where('rfid_number', $request->rfid_number)->first();
-        } else {
-            $member = User::find($request->user_id);
-        }
+        // සාමාජිකයාව සොයාගැනීම
+        $member = User::where('gym_id', $admin->gym_id)
+            ->where(function($query) use ($identifier) {
+                $query->where('rfid_number', $identifier)
+                      ->orWhere('phone', $identifier)
+                      ->orWhere('email', $identifier);
+            })->first();
 
         // සාමාජිකයාව හමු වුණේ නැත්නම්
         if (!$member) {
@@ -56,7 +64,7 @@ class AttendanceController extends Controller
 
         // අද දිනය සහ මේ වෙලාව ලබාගැනීම
         $today = Carbon::today()->toDateString();
-       $now = Carbon::now()->toDateTimeString();
+        $now = Carbon::now()->toDateTimeString();
 
         // අද දවසට අදාළව මේ සාමාජිකයාගේ පැමිණීමක් දැනටමත් තියෙනවද බැලීම
         $attendance = Attendance::where('user_id', $member->id)
@@ -74,32 +82,40 @@ class AttendanceController extends Controller
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Check-In successful',
-                'member_name' => $member->name,
-                'time' => $now
+                'message' => 'Check-In successful for ' . $member->name
             ], 200);
         } 
         // පැමිණීමක් තියෙනවා නම් Check-out කිරීම
         else {
-            // දැනටමත් Check-out වෙලා නම්
             if ($attendance->check_out_time) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Member has already checked out for today'
+                    'message' => $member->name . ' has already checked out for today.'
                 ], 400);
             }
 
-            // Check-out වෙලාව සටහන් කිරීම
             $attendance->update([
                 'check_out_time' => $now
             ]);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Check-Out successful',
-                'member_name' => $member->name,
-                'time' => $now
+                'message' => 'Check-Out successful for ' . $member->name
             ], 200);
         }
+    }
+
+    // 4. වැරදිලා මාර්ක් වුනොත් ඒක මකන function එක
+    public function destroy($id)
+    {
+        $user = Auth::user();
+        $attendance = Attendance::where('gym_id', $user->gym_id)->find($id);
+        
+        if ($attendance) {
+            $attendance->delete();
+            return response()->json(['status' => 'success', 'message' => 'Attendance removed.']);
+        }
+        
+        return response()->json(['status' => 'error', 'message' => 'Record not found.'], 404);
     }
 }
