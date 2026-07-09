@@ -99,5 +99,12 @@ Route::get('/attendance/today', [App\Http\Controllers\AttendanceController::clas
 Route::post('/attendance/mark', [App\Http\Controllers\AttendanceController::class, 'mark']);
 Route::delete('/attendance/{id}', [App\Http\Controllers\AttendanceController::class, 'destroy']);
 
+// ==========================================
+// SMS Packages කළමනාකරණය (Super Admin සහ Owner දෙගොල්ලොන්ටම)
+// ==========================================
+Route::get('/sms-packages', [App\Http\Controllers\SmsPackageController::class, 'index']); // පැකේජ් බලන්න
+Route::post('/admin/sms-packages', [App\Http\Controllers\SmsPackageController::class, 'store']); // අලුත් පැකේජ් හදන්න
+Route::delete('/admin/sms-packages/{id}', [App\Http\Controllers\SmsPackageController::class, 'destroy']); // මකන්න
+
 }); // ආරක්ෂිත කලාපය අවසානය
     
