@@ -106,5 +106,10 @@ Route::get('/sms-packages', [App\Http\Controllers\SmsPackageController::class, '
 Route::post('/admin/sms-packages', [App\Http\Controllers\SmsPackageController::class, 'store']); // අලුත් පැකේජ් හදන්න
 Route::delete('/admin/sms-packages/{id}', [App\Http\Controllers\SmsPackageController::class, 'destroy']); // මකන්න
 
+// Gym Owner SMS Routes
+Route::get('/owner/sms-balance', [App\Http\Controllers\SmsController::class, 'getBalance']);
+Route::post('/owner/sms/send', [App\Http\Controllers\SmsController::class, 'sendSms']);
+Route::post('/owner/sms/buy', [App\Http\Controllers\SmsController::class, 'buyPackage']); // මේකෙන් තමයි ස්ලිප් එක යවන්නේ
+
 }); // ආරක්ෂිත කලාපය අවසානය
     

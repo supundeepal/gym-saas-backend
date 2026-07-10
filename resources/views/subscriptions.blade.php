@@ -23,38 +23,7 @@
 <body class="bg-darkBg text-white font-sans flex h-screen overflow-hidden">
 
     <!-- Sidebar -->
-    <aside class="w-64 bg-panelBg flex flex-col justify-between h-full border-r border-gray-800 flex-shrink-0">
-        <div>
-            <div class="flex items-center gap-3 px-6 py-6 cursor-pointer">
-                <i class="fa-solid fa-server text-brandOrange text-2xl"></i>
-                <span class="text-xl font-bold tracking-wider">Gym SaaS</span>
-            </div>
-            <nav class="mt-4 px-4 space-y-2">
-                <a href="/" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
-                    <i class="fa-solid fa-chart-line w-5"></i>
-                    <span class="font-semibold">System Overview</span>
-                </a>
-                <a href="/manage-gyms" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
-                    <i class="fa-solid fa-dumbbell w-5"></i>
-                    <span>Manage Gyms</span>
-                </a>
-                <a href="/gym-owners" class="flex items-center gap-4 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
-                    <i class="fa-solid fa-user-shield w-5"></i>
-                    <span>Gym Owners</span>
-                </a>
-                <a href="/subscriptions" class="flex items-center gap-4 px-4 py-3 bg-brandOrange text-white rounded-lg shadow-lg">
-                    <i class="fa-solid fa-tags w-5"></i>
-                    <span>Subscriptions</span>
-                </a>
-            </nav>
-        </div>
-        <div class="px-4 pb-6">
-            <button onclick="logout()" class="w-full flex items-center gap-4 px-4 py-2 text-gray-400 hover:text-red-500 transition cursor-pointer">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                <span>Log Out</span>
-            </button>
-        </div>
-    </aside>
+    @include('admin-sidebar')
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col h-full overflow-y-auto">
@@ -109,9 +78,9 @@
                     <h3 class="text-2xl font-bold flex items-center gap-2">
                         <i class="fa-solid fa-message text-blue-500"></i> Bulk SMS Packages
                     </h3>
-                    <!-- SMS Add Button (දැන් වැඩ කරනවා!) -->
-                    <button onclick="openAddSmsModal()" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
-                        <i class="fa-solid fa-plus mr-1"></i> Add SMS Package
+                    <!-- මේ බටන් එකේ අවුල හැදුවා -->
+                    <button onclick="openAddSmsModal()" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold transition flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Add SMS Package
                     </button>
                 </div>
                 <div id="sms-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -152,7 +121,7 @@
         </div>
     </div>
 
-    <!-- ================= Add SMS Package Modal (අලුත් කෑල්ල) ================= -->
+    <!-- ================= Add SMS Package Modal ================= -->
     <div id="addSmsModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50">
         <div class="bg-panelBg p-8 rounded-2xl w-full max-w-md border border-gray-700 shadow-2xl">
             <h2 class="text-xl font-bold mb-6">Create SMS Package</h2>
@@ -312,7 +281,7 @@
             }
         }
 
-        // ------------------ Bulk SMS Packages Scripts (අලුත් කෑල්ල) ------------------
+        // ------------------ Bulk SMS Packages Scripts (වැරදි හැදුවා) ------------------
 
         function loadSmsPackages() {
             fetch('/api/sms-packages', {
@@ -322,7 +291,8 @@
             .then(data => {
                 if(data.status === 'success') {
                     let html = '';
-                    data.packages.forEach(pkg => {
+                    // මෙතන කලින් තිබ්බේ data.packages. ඒක data.data කියලා හැදුවා
+                    data.data.forEach(pkg => {
                         let perSms = (parseFloat(pkg.price) / pkg.sms_count).toFixed(2);
                         html += `
                             <div class="bg-panelBg p-6 rounded-2xl border border-gray-700 relative group transition hover:border-blue-500">
@@ -360,7 +330,8 @@
                 price: document.getElementById('sms_price').value
             };
 
-            fetch('/api/sms-packages', {
+            // මෙතන කලින් තිබ්බේ /api/sms-packages. ඒක /api/admin/sms-packages කියලා හැදුවා
+            fetch('/api/admin/sms-packages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': 'Bearer ' + superAdminToken },
                 body: JSON.stringify(data)
@@ -379,7 +350,8 @@
 
         function deleteSms(id) {
             if(confirm("Are you sure you want to delete this SMS package?")) {
-                fetch('/api/sms-packages/' + id, { 
+                // මෙතනත් ලින්ක් එක /api/admin/sms-packages කියලා හැදුවා
+                fetch('/api/admin/sms-packages/' + id, { 
                     method: 'DELETE', 
                     headers: { 'Authorization': 'Bearer ' + superAdminToken } 
                 })
