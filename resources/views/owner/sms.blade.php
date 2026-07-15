@@ -65,6 +65,25 @@
                 </div>
             </div>
 
+            <!-- 🔴 අලුත් Purchase History කෑල්ල 🔴 -->
+            <div class="border-t border-gray-800 pt-8 mt-8">
+                <h3 class="text-xl font-bold mb-4"><i class="fa-solid fa-clock-rotate-left text-brandBlue mr-2"></i> My Purchase History</h3>
+                <div class="bg-panelBg rounded-2xl border border-gray-700 overflow-hidden shadow-lg">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-darkBg text-gray-400 border-b border-gray-800">
+                            <tr>
+                                <th class="px-6 py-4">Date</th>
+                                <th class="px-6 py-4">Package</th>
+                                <th class="px-6 py-4">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table" class="divide-y divide-gray-800 text-gray-300">
+                            <tr><td colspan="3" class="px-6 py-8 text-center text-gray-500">Loading history...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
     </main>
 
@@ -103,9 +122,11 @@
         const ownerToken = localStorage.getItem('gym_owner_token');
         if (!ownerToken) window.location.href = '/portal/login';
 
+        // 🔴 මෙතන තමයි පිටුව ලෝඩ් වෙද්දි ඔක්කොම කෝල් වෙන්නේ 🔴
         document.addEventListener('DOMContentLoaded', () => {
             fetchSmsBalance();
             fetchSmsPackages();
+            fetchMyPurchases(); // 👈 අලුත් History එක මෙතනින් කෝල් වෙනවා
         });
 
         document.getElementById('sms_message').addEventListener('input', function() {
@@ -182,7 +203,6 @@
             submitBtn.innerText = "Uploading...";
             submitBtn.disabled = true;
 
-            // පින්තූර යවන්න ඕන නිසා අනිවාර්යයෙන්ම FormData පාවිච්චි කරන්න ඕන
             let formData = new FormData();
             formData.append('package_id', document.getElementById('selected_package_id').value);
             formData.append('slip', document.getElementById('slip_file').files[0]);
@@ -192,7 +212,6 @@
                 headers: { 
                     'Accept': 'application/json', 
                     'Authorization': 'Bearer ' + ownerToken 
-                    // විශේෂයි: FormData යවද්දි 'Content-Type': 'application/json' දාන්න එපා!
                 },
                 body: formData
             })
@@ -204,6 +223,7 @@
                 if(data.status === 'success') {
                     alert(data.message);
                     closePaymentModal();
+                    fetchMyPurchases(); // 👈 අප්ලෝඩ් කරපු ගමන් History ටේබල් එක අලුත් වෙනවා
                 } else {
                     alert('Error: ' + data.message);
                 }
@@ -216,7 +236,39 @@
             });
         });
 
-        // 4. SMS යැවීම
+        // 🔴 4. Purchase History එක ගන්න අලුත් Function එක 🔴
+        function fetchMyPurchases() {
+            fetch('/api/owner/sms-purchases', {
+                headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + ownerToken }
+            })
+            .then(res => res.json())
+            .then(data => {
+                let tbody = document.getElementById('history-table');
+                if(data.status === 'success' && data.data.length > 0) {
+                    let html = '';
+                    data.data.forEach(req => {
+                        let date = new Date(req.created_at).toLocaleDateString();
+                        let statusBadge = '';
+                        if(req.status === 'pending') statusBadge = `<span class="bg-yellow-500/20 text-yellow-500 px-3 py-1 rounded-full text-xs font-bold">Pending Approval</span>`;
+                        else if(req.status === 'approved') statusBadge = `<span class="bg-green-500/20 text-green-500 px-3 py-1 rounded-full text-xs font-bold">Active</span>`;
+                        else statusBadge = `<span class="bg-red-500/20 text-red-500 px-3 py-1 rounded-full text-xs font-bold">Rejected</span>`;
+
+                        html += `
+                            <tr class="hover:bg-gray-800/50 transition">
+                                <td class="px-6 py-4 text-gray-400">${date}</td>
+                                <td class="px-6 py-4 font-bold text-white">${req.package ? req.package.name : 'Unknown Package'}</td>
+                                <td class="px-6 py-4">${statusBadge}</td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="3" class="px-6 py-8 text-center text-gray-500">No purchase history found.</td></tr>`;
+                }
+            });
+        }
+
+        // 5. SMS යැවීම
         document.getElementById('sendSmsForm').addEventListener('submit', function(e) {
             e.preventDefault();
             if(!confirm('Send this message? This will deduct from your balance.')) return;

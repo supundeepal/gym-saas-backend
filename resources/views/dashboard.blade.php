@@ -87,9 +87,7 @@
             
             <div class="flex justify-between items-center mb-2">
                 <h2 class="text-2xl font-bold">System Overview</h2>
-                <button onclick="toggleModal('registerGymModal')" class="bg-brandOrange hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-semibold transition flex items-center gap-2 shadow-lg">
-                    <i class="fa-solid fa-plus"></i> Register New Gym
-                </button>
+                
             </div>
 
             <!-- System Stats Cards -->

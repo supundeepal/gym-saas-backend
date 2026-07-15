@@ -22,11 +22,6 @@
                 <i class="fa-solid fa-tags w-5"></i>
                 <span>Subscriptions</span>
             </a>
-            <!-- අලුත් SMS Packages ලින්ක් එක -->
-            <a href="/admin/sms-packages" class="flex items-center gap-4 px-4 py-3 rounded-lg transition {{ request()->is('admin/sms-packages') ? 'bg-brandOrange text-white shadow-lg' : 'text-gray-400 hover:text-white hover:bg-gray-800' }}">
-                <i class="fa-solid fa-envelope-open-text w-5"></i>
-                <span>SMS Packages</span>
-            </a>
         </nav>
     </div>
 

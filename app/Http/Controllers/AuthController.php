@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\Gym; 
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -40,100 +42,120 @@ class AuthController extends Controller
         ], 401);
     }
 
-    // 2. Super Admin විසින් අලුත් ජිම් එකක් සහ එහි අයිතිකරු ලියාපදිංචි කිරීම
+    // 2. අලුත් Gym එකක් සහ Owner කෙනෙක් රෙජිස්ටර් කිරීම (Plan එකත් එක්කම)
     public function registerGym(Request $request)
     {
-        $superAdmin = Auth::user();
-
-        // මේක කරන්න පුළුවන් Super Admin ට විතරක් බව තහවුරු කිරීම
-        if ($superAdmin->role !== 'super_admin') {
-            return response()->json(['message' => 'Unauthorized Access. Only Super Admins can do this.'], 403);
-        }
-
         $request->validate([
-            'gym_name' => 'required|string',
-            'owner_name' => 'required|string',
+            // Gym විස්තර
+            'gym_name' => 'required|string|max:255',
+            'gym_address' => 'nullable|string',
+            'gym_phone' => 'nullable|string',
+            'gym_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            
+            // Owner විස්තර
+            'owner_name' => 'required|string|max:255',
             'owner_email' => 'required|email|unique:users,email',
-            'owner_password' => 'required|string|min:6',
+            'owner_password' => 'required|min:6',
+            'owner_nic' => 'nullable|string|max:20',
+            'owner_phone' => 'nullable|string|max:20',
+
+            // Plan විස්තර
+            'plan_id' => 'required' 
         ]);
 
-        // අලුත් ජිම් එක Database එකට දැමීම (Slug එකත් එක්ක නිවැරදිව)
+        // Logo එකක් තියෙනවද බලලා සේව් කරනවා
+        $logoPath = null;
+        if ($request->hasFile('gym_logo')) {
+            $logoPath = $request->file('gym_logo')->store('gym_logos', 'public');
+        }
+
+        // Gym එක හදනවා (Slug එකයි Plan ID එකයි එක්කම)
         $gym = Gym::create([
             'name' => $request->gym_name,
             'slug' => Str::slug($request->gym_name), 
+            'plan_id' => $request->plan_id, // 👈 මේක අලුතින් දැම්මේ
+            'address' => $request->gym_address,
+            'phone' => $request->gym_phone,
+            'logo_path' => $logoPath,
+            'sms_balance' => 0
         ]);
 
-       // ජිම් එකේ අයිතිකරුව Database එකට දැමීම
-        $owner = User::create([
+        // තෝරගත්ත Plan එකට අනුව, අද ඉඳන් දින 30 කින් Expire වෙන විදිහට දවස හදනවා
+        $expireDate = Carbon::now()->addDays(30)->format('Y-m-d');
+
+        // Owner ව හදනවා
+        $user = User::create([
             'name' => $request->owner_name,
             'email' => $request->owner_email,
-            'password' => Hash::make($request->owner_password),
-            'role' => 'gym_owner', // 👈 මෙතන 'admin' වෙනුවට 'gym_owner' කළා
-            'gym_id' => $gym->id, 
+            'password' => bcrypt($request->owner_password),
+            'role' => 'owner',
+            'gym_id' => $gym->id,
+            'nic' => $request->owner_nic,
+            'phone' => $request->owner_phone,
+            'expire_date' => $expireDate, 
         ]);
 
         return response()->json([
-            'status' => 'success',
-            'message' => 'Gym and Gym Owner created successfully',
-            'gym' => $gym,
-            'owner' => $owner
-        ], 201);
-    } // 👉 අර කලින් අඩුවෙලා තිබුණු වරහන මෙන්න මේකයි! 👈
+            'status' => 'success', 
+            'message' => 'Gym and Owner registered successfully with the selected Plan!'
+        ]);
+    }
 
-    // 3. Super Admin ගේ ඩෑෂ්බෝඩ් එකට දත්ත යැවීම
-    public function getDashboardStats()
-    {
-        $superAdmin = Auth::user();
-
-        // Super Admin ට විතරක් දත්ත දෙනවා
-        if ($superAdmin->role !== 'super_admin') {
-            return response()->json(['message' => 'Unauthorized Access.'], 403);
-        }
-
-        // Database එකෙන් දත්ත ගැනීම
-        $totalGyms = Gym::count();
-        $ownerRoles = ['gym_owner', 'admin', 'owner'];
-        $totalOwners = User::whereIn('role', $ownerRoles)->count();
-        
-        // අලුතින්ම රෙජිස්ටර් කරපු ජිම් 5 ක ලිස්ට් එකක් (අයිතිකාරයත් එක්ක)
-        $recentGyms = Gym::orderBy('created_at', 'desc')->take(5)->get();
-
-        return response()->json([
-            'status' => 'success',
-            'stats' => [
-                'total_gyms' => $totalGyms,
-                'active_owners' => $totalOwners,
-                'total_members' => 0, // මේක පස්සේ හදමු Members ලා එකතු කරද්දී
-                'revenue' => 'Rs. 0'  // මේකත් Payment දාද්දී හදමු
-            ],
-            'recent_gyms' => $recentGyms
-        ], 200);
-    
-    }// 4. Manage Gyms පිටුවට සියලුම ජිම් වල විස්තර යැවීම
+    // 🔴 3. අලුතින් එකතු කරපු Function එක: සිස්ටම් එකේ තියෙන ඔක්කොම ජිම් ටික යැවීම 🔴
     public function getAllGyms()
     {
         $superAdmin = Auth::user();
-
         if ($superAdmin->role !== 'super_admin') {
             return response()->json(['message' => 'Unauthorized Access.'], 403);
         }
 
-        $gyms = \Illuminate\Support\Facades\DB::table('gyms')
-            ->leftJoin('users', function ($join) {
+        // Gyms ටේබල් එකයි, Users (Owner) ටේබල් එකයි සම්බන්ද කරලා ඩේටා ගන්නවා
+        $gyms = DB::table('gyms')
+            ->leftJoin('users', function($join) {
                 $join->on('gyms.id', '=', 'users.gym_id')
-                     ->whereIn('users.role', ['gym_owner', 'admin', 'owner']);
+                     ->whereIn('users.role', ['owner', 'gym_owner', 'admin']);
             })
-            // 👇 gyms.sms_balance එක හා owner හඳුනාගැනීම සඳහා owner-roles පමණක් එකතු කරලා තියෙන්නේ 👇
-            ->select('gyms.id', 'gyms.name as gym_name', 'gyms.created_at', 'gyms.sms_balance', 'users.name as owner_name', 'users.email as owner_email')
+            ->select('gyms.*', 'users.name as owner_name', 'users.email as owner_email')
             ->orderBy('gyms.created_at', 'desc')
             ->get();
 
         return response()->json([
             'status' => 'success',
             'gyms' => $gyms
-        ], 200);
-    
-    }// 5. ජිම් එකක විස්තර Update කිරීම (Edit)
+        ]);
+    }
+
+    // 🔴 4. Super Admin ගේ ඩෑෂ්බෝඩ් එකේ Stats යවන Function එක 🔴
+    public function getDashboardStats()
+    {
+        $superAdmin = Auth::user();
+        if ($superAdmin->role !== 'super_admin') {
+            return response()->json(['message' => 'Unauthorized Access.'], 403);
+        }
+
+        $totalGyms = Gym::count();
+        $totalOwners = User::whereIn('role', ['owner', 'gym_owner', 'admin'])->count();
+        $totalMembers = User::where('role', 'member')->count();
+
+        // දැනට මෑතකදී රෙජිස්ටර් වුණු ජිම් 5ක් ගන්නවා
+        $recentGyms = DB::table('gyms')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'stats' => [
+                'total_gyms' => $totalGyms,
+                'active_owners' => $totalOwners,
+                'total_members' => $totalMembers,
+                'monthly_revenue' => 0
+            ],
+            'recent_gyms' => $recentGyms
+        ]);
+    }
+
+    // 5. ජිම් එකක විස්තර Update කිරීම (Edit)
     public function updateGym(Request $request, $id)
     {
         $superAdmin = Auth::user();
@@ -182,7 +204,9 @@ class AuthController extends Controller
         $gym->delete();
 
         return response()->json(['status' => 'success', 'message' => 'Gym and its owner deleted successfully!']);
-    } // 7. Gym Owners ලගේ ලිස්ට් එක යැවීම
+    } 
+    
+    // 7. Gym Owners ලගේ ලිස්ට් එක යැවීම
     public function getAllGymOwners()
     {
         $superAdmin = Auth::user();
@@ -190,8 +214,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Unauthorized Access.'], 403);
         }
 
-        // Only return users that have an owner role, joined with their gym
-        $owners = \Illuminate\Support\Facades\DB::table('users')
+        $owners = DB::table('users')
             ->whereIn('users.role', ['gym_owner', 'admin', 'owner'])
             ->leftJoin('gyms', 'users.gym_id', '=', 'gyms.id')
             ->select('users.id', 'users.name as owner_name', 'users.email', 'users.created_at', 'gyms.name as gym_name')
@@ -202,27 +225,30 @@ class AuthController extends Controller
             'status' => 'success',
             'owners' => $owners
         ], 200);
-    }// 8. සිස්ටම් එකේ තියෙන Plans සියල්ලම යැවීම
+    }
+    
+    // 8. සිස්ටම් එකේ තියෙන Plans සියල්ලම යැවීම
     public function getAllPlans()
     {
-        // Plans ටේබල් එකෙන් ඔක්කොම විස්තර ගන්නවා
         $plans = \App\Models\Plan::all();
 
         return response()->json([
             'status' => 'success',
             'plans' => $plans
         ], 200);
-    }// 9. අලුත් SaaS Plan එකක් ඇතුළත් කිරීම (Add New Plan)
+    }
+    
+    // 9. අලුත් SaaS Plan එකක් ඇතුළත් කිරීම (Add New Plan)
     public function storePlan(Request $request)
     {
         $superAdmin = Auth::user();
         if ($superAdmin->role !== 'super_admin') return response()->json(['message' => 'Unauthorized Access.'], 403);
 
-        $featuresArray = explode(',', $request->features); // කොමා වලින් වෙන් කරපු Features ටික Array එකක් කරනවා
+        $featuresArray = explode(',', $request->features); 
 
         $plan = \App\Models\Plan::create([
             'name' => $request->name,
-            'slug' => \Illuminate\Support\Str::slug($request->name),
+            'slug' => Str::slug($request->name),
             'price' => $request->price,
             'max_members' => $request->max_members,
             'features' => $featuresArray,
@@ -240,7 +266,9 @@ class AuthController extends Controller
 
         \App\Models\Plan::where('id', $id)->delete();
         return response()->json(['status' => 'success']);
-    }// SMS Packages එළියට ගැනීම
+    }
+    
+    // 11. SMS Packages එළියට ගැනීම
     public function getSmsPackages()
     {
         $packages = \App\Models\SmsPackage::all();
@@ -270,21 +298,17 @@ class AuthController extends Controller
             return response()->json(['message' => 'Unauthorized Access.'], 403);
         }
 
-        // Prefer direct user lookup by id; if not found, treat the input as a gym_id and find an owner
         $ownerRoles = ['gym_owner', 'admin', 'owner'];
-
-        $targetOwner = \App\Models\User::find($id);
+        $targetOwner = User::find($id);
 
         if (!$targetOwner) {
-            // find a user who is an owner for that gym
-            $targetOwner = \App\Models\User::where('gym_id', $id)->whereIn('role', $ownerRoles)->first();
+            $targetOwner = User::where('gym_id', $id)->whereIn('role', $ownerRoles)->first();
         }
 
         if (!$targetOwner) {
             return response()->json(['message' => 'User account not found.'], 404);
         }
 
-        // Ensure the found user has an owner role
         if (!in_array($targetOwner->role, $ownerRoles, true)) {
             return response()->json(['message' => 'This user is not a Gym Owner. (Current Role: ' . $targetOwner->role . ')'], 404);
         }
@@ -297,30 +321,27 @@ class AuthController extends Controller
         ], 200);
     }
 
+    // 13. Owner ගේ Dashboard එකට Stats යැවීම
     public function getOwnerDashboardStats()
     {
         $user = Auth::user();
 
-        // ලොග් වෙලා ඉන්නේ Gym Owner කෙනෙක්ද කියලා බලනවා
         if ($user->role !== 'gym_owner' && $user->role !== 'admin' && $user->role !== 'owner') {
             return response()->json(['message' => 'Unauthorized Access.'], 403);
         }
 
-        $gym = \App\Models\Gym::find($user->gym_id);
-        $memberCount = \App\Models\User::where('gym_id', $user->gym_id)->where('role', 'member')->count();
+        $gym = Gym::find($user->gym_id);
+        $memberCount = User::where('gym_id', $user->gym_id)->where('role', 'member')->count();
 
         return response()->json([
             'status' => 'success',
             'stats' => [
-                // 🔹 මේ ටික තමයි ඔයාගේ පරණ කේතයේ තිබුණේ
                 'gym_name' => optional($gym)->name,
                 'members' => $memberCount,
                 'gym_id' => $user->gym_id,
-                
-                // 🔹 මේ ටික මම අලුතින් ඔයාට ඕන නිසා එකතු කළා (Frontend එකේ undefined එන්නේ නැති වෙන්න)
                 'owner_name' => $user->name,
                 'sms_balance' => optional($gym)->sms_balance ?? 0,
-                'monthly_revenue' => 0, // දැනට 0, පස්සේ Payment table එකෙන් ගනිමු
+                'monthly_revenue' => 0, 
             ]
         ], 200);
     }

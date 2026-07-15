@@ -9,6 +9,7 @@ use App\Models\SmsPackage;
 use App\Models\SmsPurchase;
 use Illuminate\Support\Facades\Auth;
 
+
 class SmsController extends Controller
 {
     // 1. Gym Owner ගේ දැනට තියෙන SMS Balance එක ගැනීම
@@ -95,5 +96,15 @@ class SmsController extends Controller
             'status' => 'success',
             'message' => "Successfully sent {$totalSmsNeeded} SMS to {$memberCount} members!"
         ]);
+    }// Gym Owner ගේ SMS මිලදීගැනීම් ඉතිහාසය බැලීම
+    public function getMyPurchases()
+    {
+        $user = Auth::user();
+        $purchases = SmsPurchase::with('package')
+                        ->where('gym_id', $user->gym_id)
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+                        
+        return response()->json(['status' => 'success', 'data' => $purchases]);
     }
 }

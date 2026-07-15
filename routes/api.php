@@ -111,5 +111,22 @@ Route::get('/owner/sms-balance', [App\Http\Controllers\SmsController::class, 'ge
 Route::post('/owner/sms/send', [App\Http\Controllers\SmsController::class, 'sendSms']);
 Route::post('/owner/sms/buy', [App\Http\Controllers\SmsController::class, 'buyPackage']); // මේකෙන් තමයි ස්ලිප් එක යවන්නේ
 
+Route::get('/admin/sms-purchases', [App\Http\Controllers\SmsPackageController::class, 'getPurchases']);
+Route::post('/admin/sms-purchases/{id}/approve', [App\Http\Controllers\SmsPackageController::class, 'approvePurchase']);
+Route::post('/admin/sms-purchases/{id}/reject', [App\Http\Controllers\SmsPackageController::class, 'rejectPurchase']);
+
+Route::get('/owner/sms-purchases', [App\Http\Controllers\SmsController::class, 'getMyPurchases']);
+
+// Gym Owner ගේ Subscription රූට්ස්
+    Route::get('/owner/my-plan', [App\Http\Controllers\SubscriptionController::class, 'getMyPlan']);
+    Route::post('/owner/renew-plan', [App\Http\Controllers\SubscriptionController::class, 'renewPlan']);
+
+    // Super Admin - SaaS Subscription Approvals
+    Route::get('/admin/subscription-requests', [App\Http\Controllers\SubscriptionController::class, 'getAllRequests']);
+    Route::post('/admin/subscription-requests/{id}/approve', [App\Http\Controllers\SubscriptionController::class, 'approveRequest']);
+    Route::post('/admin/subscription-requests/{id}/reject', [App\Http\Controllers\SubscriptionController::class, 'rejectRequest']);
+
+    Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'getNotifications']);
+    Route::post('/notifications/mark-read', [App\Http\Controllers\NotificationController::class, 'markAsRead']);
 }); // ආරක්ෂිත කලාපය අවසානය
     
